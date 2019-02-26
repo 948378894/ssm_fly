@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.neuedu.mapper.TestPageMapper">
+	<select id="getTotalCount" resultType="int">
+		select count(*) from articleinfo
+	</select>
+	<select id="getData" resultType="map" parameterType="Page">
+		select title,nickname
+		from userinfo u
+		join articleinfo a
+		on a.authorid = u.id
+		limit #{pageIndex},#{pageSize}
+	</select>
+  </mapper>   

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+       
+<mapper namespace="com.neuedu.mapper.UserinfoMapper">
+	<select id="regEmailCheck" resultType="int" parameterType="String">
+		select count(*) from userinfo
+		where email=#{email}
+	</select>	
+	<insert id="addUserinfo" parameterType="Userinfo">
+	insert into userinfo(email,nickname,password,regtime,activecode) values(#{email},#{nickname},#{password},#{regtime},#{activecode})
+	</insert>
+	<select id="getEmailandPass" resultType="int" parameterType="Userinfo">
+		select count(*) from userinfo
+		where email=#{email} and password=#{password}
+	</select>
+	<select id="LoginCheck" resultType="Userinfo" parameterType="Userinfo">
+		select * from userinfo
+		where email=#{email} and password=#{password}
+	</select>
+	<update id="UpdataUserinfo" parameterType="Userinfo">
+		update userinfo
+		set email=#{email},city=#{city},nickname=#{nickname},sex=#{sex},sign=#{sign}
+		where email=#{oldemail}
+	</update>
+	<select id="setEmailCheck" resultType="int" parameterType="Userinfo">
+		select count(*) from userinfo
+		where email=#{email}
+	</select>
+	<update id="updatePass" parameterType="Userinfo" >
+		update userinfo
+		set password=#{password}
+		where id=#{id}
+	</update>
+	<update id="activeMail"  parameterType="String">
+		update userinfo
+		set active = 1
+		where activecode = #{mailcode}
+	</update>	
+		<update id="uploadHeadImg" parameterType="Userinfo" >
+		update userinfo
+		set head=#{head}
+		where id=#{id}
+	</update>
+	<select id="getTaUser" resultType="map" parameterType="int">
+		select id,nickname,head,city,sign,sex,kissnum,experience,regtime
+		from userinfo 
+		where id=#{id}
+	</select>
+</mapper>

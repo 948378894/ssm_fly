@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.neuedu.mapper.ArticleMapper">
+  	<select id="loadArticleType" resultType="Articletype" parameterType="int">
+  		select id,typename
+  		from Articletype
+  		<where>
+  			<if test="value==0">
+  				and power=0
+  			</if>
+  		</where>
+  	</select>
+  		<insert id="releaseArticle" parameterType="Articleinfo">
+		insert into articleinfo(title,authorid,releasetime,typeid,markdown_content,html_content,paykiss)
+		values (#{title},#{authorid},#{releasetime},#{typeid},#{markdown_content},#{html_content},#{paykiss})
+	</insert>
+	<update id="updateKissNum" parameterType="Articleinfo">
+		update userinfo
+		set kissnum = kissnum - #{paykiss}
+		where id = #{authorid}
+	</update>
+	<select id="getIndexArticleInfo" resultType="map">
+		select authorid,art.id artid,typeid,head,nickname,title,releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		where  exsits=0
+		order by stick desc,releasetime desc
+	</select>
+		<select id="getIndexStick"  resultType="map">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		where stick = 1 and exsits=0
+		order by stick desc,releasetime desc
+	</select>
+	<select id="getTotalCounts" resultType="int">
+		select count(*) from articleinfo where stick = 0 and exsits=0
+	</select>
+	<select id="getIndexNoStick" resultType="map" parameterType="Page">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		where stick = 0 and exsits=0
+		order by releasetime desc
+		limit #{pageIndex},#{pageSize}
+	</select>
+	<select id="getIndexNoStick2" resultType="map" parameterType="int">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		
+		<where>
+			stick = 0 and exsits=0
+			<if test="value!=0">
+				and art.id &lt;#{value}
+			</if>
+		</where>
+		order by artid desc
+		limit 0,10
+	</select>
+	<select id="getArticleDetail" resultType="map" parameterType="int">
+		select art.id artid,typeid,typename, authorid,head,nickname,title,releasetime,cream,stick,isdone,visitnum,commentnum ,paykiss,html_content,markdown_content
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		where art.id=#{artid}		
+	</select>
+	<update id="delArticleById" parameterType="int">
+		update articleinfo
+		set exsits=1
+		where id=#{artid}
+	</update>
+	<update id="delMessById" parameterType="int">
+		update messageinfo
+		set empty=1
+		where id=#{messid}
+	</update>
+	<update id="delAllMess" parameterType="int">
+		update messageinfo
+		set empty=1
+		where writerid=#{messid}
+	</update>	
+		<update id="addPageView" parameterType="int">
+		update articleinfo
+		set visitnum=visitnum+1
+		where id=#{artid}
+	</update>
+		<update id="isStick" parameterType="int">
+		update articleinfo
+		set stick=1
+		where id=#{artid}
+	</update>
+		<update id="onStick" parameterType="int">
+		update articleinfo
+		set stick=0
+		where id=#{artid}
+	</update>
+		<update id="iscream" parameterType="int">
+		update articleinfo
+		set cream=1
+		where id=#{artid}
+	</update>
+		<update id="nocream" parameterType="int">
+		update articleinfo
+		set cream=0
+		where id=#{artid}
+	</update>
+		<update id="isDone" parameterType="int">
+		update articleinfo
+		set isdone=1
+		where id=#{artid}
+	</update>
+	<insert id="addMainComment" parameterType="Commentinfo">
+		<selectKey keyProperty="id" order="AFTER" resultType="int">
+			select LAST_INSERT_ID()
+		</selectKey>
+		insert into commentinfo(authorid,commtime,commcontent,artidorcommid)
+		values (#{authorid},#{commtime},#{commcontent},#{artidorcommid})
+	</insert>
+	<update id="addCommentNum" parameterType="Commentinfo">
+		update articleinfo
+		set commentnum = commentnum + 1
+		where id = #{artidorcommid}
+	</update>
+	
+	<select id="getCommentByArtId" parameterType="int" resultType="map">
+		select c.id commid,head,authorid,nickname,authority,commtime,commcontent,praisepoints,isaccept,experience
+		from userinfo u
+		join commentinfo c
+		on u.id = c.authorid
+		where artidorcommid = #{artid} and exist =0
+	</select>
+		<update id="delComment" parameterType="int">
+		update commentinfo
+		set exist =  1
+		where id = #{commid}
+	</update>
+			<update id="updateCommentNum" parameterType="int">
+		update articleinfo
+		set commentnum = commentnum - 1
+		where id = #{artidorcommid}
+	</update>
+		<update id="commentAccept" parameterType="int">
+		update commentinfo
+		set isaccept =  1
+		where id = #{commid}
+	</update>
+	<update id="offerKiss" parameterType="Userinfo">
+		update userinfo
+		set kissnum = kissnum + #{kissnum}
+		where id = #{id}
+	</update>
+	<select id="findAuthorid" resultType="int" parameterType="int">
+		select authorid from commentinfo
+		where id=#{commid}
+	</select>
+	<select id="getCollectiocById" resultType="map" parameterType="Collectioninfo">
+		select id,userid,articleid,colltime from collectioninfo
+		where userid=#{userid} and articleid=#{articleid}
+	</select>
+	<insert id="getCollectioninfo" parameterType="Collectioninfo">
+		insert into collectioninfo(userid,articleid,colltime)
+		values (#{userid},#{articleid},#{colltime})
+	</insert>
+	<delete id="delcollection" parameterType="Collectioninfo">
+		delete from collectioninfo
+		where userid=#{userid} and articleid=#{articleid}
+	</delete>
+	<select id="getCollectionNum" resultType="int" parameterType="int">
+		select count(*) from collectioninfo where userid=#{userid}
+	</select>
+	<select id="getIndexCollection" resultType="map" parameterType="Page">
+	select userid,articleid,title,DATE_FORMAT(colltime,'%Y-%m-%d %H:%i:%s') colltime
+		from collectioninfo c
+		join articleinfo art
+		on c.articleid = art.id
+		where userid=#{userid}
+		order by colltime desc
+		limit #{pageIndex},#{pageSize}
+	</select>
+	<select id="getPostNum" resultType="int" parameterType="int">
+		select count(*) from articleinfo where authorid=#{userid}
+	</select>
+	<select id="getIndexPost" resultType="map" parameterType="Page">
+		select authorid,id,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime, visitnum,commentnum
+		from articleinfo 
+		where authorid=#{userid}
+		order by releasetime desc
+		limit #{pageIndex},#{pageSize}
+	</select>
+	<update id="editArticle" parameterType="Articleinfo">
+		update articleinfo
+		set title=#{title},authorid=#{authorid},typeid=#{typeid},markdown_content=#{markdown_content},html_content=#{html_content},paykiss=#{paykiss}
+		where id = #{id}
+	</update>
+	<select id="getAllIndex" resultType="map" parameterType="int">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		
+		<where>
+			exsits=0
+			<if test="value!=0">
+				and art.id &lt;#{value}
+			</if>
+		</where>
+		order by artid desc
+		limit 0,10
+	</select>
+	<select id="getnoDoneIndex" resultType="map" parameterType="int">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		
+		<where>
+			isdone=0 and exsits=0
+			<if test="value!=0">
+				and art.id &lt;#{value}
+			</if>
+		</where>
+		order by artid desc
+		limit 0,10
+	</select>
+		<select id="getAcceptIndex" resultType="map" parameterType="int">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		
+		<where>
+			isdone=1 and exsits=0
+			<if test="value!=0">
+				and art.id &lt;#{value}
+			</if>
+		</where>
+		order by artid desc
+		limit 0,10
+	</select>
+	<select id="getCreamIndex" resultType="map" parameterType="int">
+		select authorid,art.id artid,typeid,head,nickname,title,DATE_FORMAT(releasetime,'%Y-%m-%d %H:%i:%s') releasetime,typename,cream,stick,visitnum,commentnum
+		from userinfo u
+		join articleinfo art
+		on u.id = art.authorid
+		join articletype aty
+		on art.typeid = aty.id
+		<where>
+			cream=1 and exsits=0
+			<if test="value!=0">
+				and art.id &lt;#{value}
+			</if>
+		</where>
+		order by artid desc
+		limit 0,10
+	</select>
+	<insert id="addReplyMessage" parameterType="Messageinfo">
+	insert into messageinfo(commid,articleid,writerid,replytime)
+	 values(#{commid},#{articleid},#{writerid},#{replytime})
+	</insert>
+	
+	<select id="getMessageById" resultType="map" parameterType="Page">
+		select m.id messid,u.id userid,nickname,title,DATE_FORMAT(replytime,'%Y-%m-%d %H:%i:%s') replytime,commid,writerid,articleid
+		from messageinfo m
+		join articleinfo a
+		 on m.articleid=a.id
+		 join userinfo u
+		 on m.commid=u.id
+		where empty=0 and writerid=#{userid}
+		order by replytime desc
+		limit #{pageIndex},#{pageSize}
+	</select>
+	<select id="getPostIndex2" resultType="map" parameterType="int">
+		select authorid,id,title,cream,TIMESTAMPDIFF(day,releasetime,NOW()) releasetime, visitnum,commentnum,html_content,markdown_content
+		from articleinfo 
+		where authorid=#{id}
+		order by releasetime
+		limit 0,7
+	</select>
+	<select id="getCommIndex" resultType="map" parameterType="int">
+		select a.id artrid,c.authorid,title,TIMESTAMPDIFF(day,commtime,NOW()) commtime,commcontent,praisepoints,isaccept,visitnum,commentnum
+		from commentinfo c
+		join articleinfo a
+		on c.artidorcommid=a.id
+		where c.authorid= #{id} and exist =0
+		order by commtime
+		limit 0,5
+	</select>			
+	<select	id="getNameBYyId" resultType="String" parameterType="int">
+		select nickname
+		from userinfo
+		where id=#{id}
+	</select>
+	<select id="getMessnumById" resultType="int" parameterType="int">
+		select count(*)  from messageinfo
+		where empty=0 and  writerid=#{id}
+	</select>
+	<select id="getReplyTop" resultType="map">
+		select nickname,count(*) num,u.id userid,head,DATE_FORMAT(commtime,'%Y-%m-%d %H:%i:%s') commtime
+				FROM commentinfo c
+				join userinfo u
+				on u.id=c.authorid
+				where c.exist=0 and TIMESTAMPDIFF(month,commtime,NOW())&lt;=1
+				GROUP BY authorid
+				ORDER BY num desc
+					LIMIT 0,12
+	</select>
+	<select id="getHotnote" resultType="map">
+		select id,visitnum,title
+		from articleinfo
+		where exsits=0
+		order by visitnum desc
+		limit 0,5
+	</select>
+	<select id="getHotcomm" resultType="map">
+		select id,commentnum,title
+		from articleinfo
+		where exsits=0
+		order by commentnum desc
+		limit 0,5
+	</select>
+	<insert id="addqiandao" parameterType="Signinfo">
+		insert into signinfo(signid,signtime)
+		values(#{signid},#{signtime})
+	</insert>
+	<select id="checkqiandao" resultType="int" parameterType="int">
+		select count(*)
+		from signinfo
+		where signid=#{signid} and signtime=DATE_FORMAT(NOW(),'%Y-%m-%d')
+	</select>
+	<select id="checkdate" resultType="int">
+		select  DATE_FORMAT(signtime,'%d')-1 signtime
+		from signinfo
+	where TIMESTAMPDIFF(month,signtime,NOW())&lt;1
+	</select>
+  </mapper>   
